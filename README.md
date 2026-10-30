@@ -14,7 +14,7 @@ The point is to forecast honestly rather than chase a low error on one lucky spl
 4. Models: exponential smoothing / SARIMA, then LightGBM on lag, rolling and calendar features
 5. Score with MAE, RMSE and wMAPE (not MAPE, which breaks on zero-sales days), by forecast horizon
 
-## Stack
+## Planned stack
 
 Python 3.12, uv, pandas, statsmodels, LightGBM, matplotlib, pytest, ruff. CI: GitHub Actions with ruff, pytest, pip-audit and Gitleaks.
 

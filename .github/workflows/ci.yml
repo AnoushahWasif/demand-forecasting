@@ -36,3 +36,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
+        env:
+          # Required to scan pull requests; read-only under this workflow's permissions.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

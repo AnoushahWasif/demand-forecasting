@@ -82,6 +82,9 @@ flowchart LR
 | 26 | One LightGBM model across all products, with features and targets divided by each product's recent level (Day 7) | 100 separate models would each see a few hundred days. Scaled, a small and a big seller with the same weekly shape teach the model the same thing |
 | 27 | Training rows are past origins inside the history, with features from data before each one; it's retrained at every backtest origin (Day 7) | The same no-look-ahead rule as the backtest, applied inside the model's own training set. Tested by poisoning everything after a training origin |
 | 28 | Tweedie loss, not L1 or L2 on logs (Day 7) | It fits non-negative counts with a long tail and aims at the mean. L1 aims at the median and would repeat the -48% bias of ETS on logs |
+| 29 | Models are compared origin by origin against ETS, with a 95% bootstrap interval that resamples whole origins (Day 8) | Pooled scores a hundredth apart are noise. Days inside one origin's window share a lot, so resampling days would give intervals that are too narrow |
+| 30 | The weeks-to-Christmas feature is dropped (Day 8) | With one earlier autumn it learned 2010's calendar: 21% of the gain, no gain in score. A seasonal feature needs more than one season to learn from |
+| 31 | LightGBM without that feature goes to the holdout, for products and the total, with ETS and the weekday mean as references (Day 8) | Clearly best per product; on the total nothing is clearly better, and one model keeps the pipeline simple. Picked on the backtest only, before the holdout is touched |
 
 ## Limitations (known before starting)
 

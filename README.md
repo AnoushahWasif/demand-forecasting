@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 3 of 11).
+**Status:** in progress (day 4 of 11).
 
 ## So far
 
@@ -37,6 +37,21 @@ Large orders stay in but are flagged: 7,335 lines (0.7%) carry 2.4 million units
 ![Demand classes with and without large orders](reports/figures/eda_demand_classes.png)
 
 What this changes for the next days: the backtest's 26 weekly origins run from April to October, and only the last 8 forecast into September. The holdout is all peak season. So backtest errors will look better than holdout errors, and a model that can't follow the season will look better than it is until the holdout. MAE and wMAPE are the main metrics, because RMSE gets pulled around by a few huge days. 12 tests.
+
+**Baselines** ([baselines.py](src/demand/models/baselines.py), [metrics.py](src/demand/metrics.py), [backtest.py](src/demand/backtest.py)). Three forecasts that need no fitting: the last open day repeated (naive), the last open day with the same weekday (seasonal naive), and the mean of the last 4 same weekdays. Horizons count open days, so a closed Saturday isn't a forecast step. A forecast window is cut where the holdout starts, so no backtest window can see it. Scored at the first backtest origin (16 April 2011, the next 14 open days):
+
+| Baseline | Products MAE | Products wMAPE | Daily total wMAPE |
+|---|---:|---:|---:|
+| naive | 33.6 | 0.91 | 0.33 |
+| seasonal naive | 37.6 | 1.02 | 0.22 |
+| mean of last 4 same weekdays | 33.5 | 0.91 | 0.28 |
+
+- **Per product, the error is about as big as the sales** (wMAPE near 1). One product's day is mostly noise, so copying last week's same day is the worst of the three: it copies one erratic number.
+- **For the shop's daily total, the weekly pattern wins.** Seasonal naive is clearly best there (0.22). Summed over many products, the noise cancels and the weekday shape is what's left.
+- So "beat the baseline" means different baselines: the 4-week weekday mean per product, seasonal naive for the total.
+- **One origin is noisy.** Besides Saturdays, the shop was shut on five days in or just before this window (Good Friday, Easter Sunday and Monday, the 29 April royal wedding holiday, 2 May), so a weekday copy often comes from an unusual week. Day 5 scores all 26 origins before any of these numbers are trusted.
+
+30 tests: the split never puts a day at or after the origin into history, never reaches the holdout, skips closed days, and refuses an origin inside the holdout; each baseline refuses to forecast dates inside its history; metrics refuse mismatched or non-finite forecasts and return no wMAPE for a window with no sales.
 
 ## Planned approach
 

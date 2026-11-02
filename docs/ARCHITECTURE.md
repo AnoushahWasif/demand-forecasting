@@ -13,7 +13,7 @@ The question it answers: **how many units of each of the retailer's main product
 | Target | Units sold per product per trading day (sum of `Quantity` on completed invoices) | Units, not revenue, drive reordering. Revenue mixes in price changes |
 | Products | The 100 products that sold on the most days in the training period, plus the all-products daily total | Most of the ~5,000 stock codes sell on a handful of days. Intermittent demand needs different methods (Croston-style), so it's out of scope and listed under limitations |
 | Horizon | 1 to 14 trading days ahead | Two weeks covers a typical reorder cycle. Error is reported per horizon, not just averaged |
-| Closed days | A day with no invoices at all is "closed" and dropped from the series, not filled with 0 | A closed shop is not zero demand. Filling zeros would teach the models a fake weekly dip and flatter wMAPE. Which weekday is closed (Saturday, it seems) and the Christmas break get checked on day 3 |
+| Closed days | A day with no invoices at all is "closed" and dropped from the series, not filled with 0 | A closed shop is not zero demand. Filling zeros would teach the models a fake weekly dip and flatter wMAPE. Checked on day 3: Saturday (one exception in two years) and 24 December to early January |
 | Final holdout | The last 8 weeks (from 15 Oct 2011), scored once at the very end | It includes the run-up to Christmas, the hardest and most useful stretch. Only one model setup gets scored on it, so it stays an honest estimate |
 | Model selection | Rolling-origin backtest: a new forecast origin every 7 days across the 26 weeks before the holdout, fitting only on data up to each origin | One split would judge models on a single fortnight. 26 origins show how stable the error is and cover spring, summer and autumn |
 | Metrics | MAE, RMSE and wMAPE (sum of absolute errors / sum of actuals), per horizon and per product, plus skill against seasonal-naive | MAPE divides by each day's actual and blows up on zero-sales days. wMAPE doesn't. A model counts only if it beats the baselines |
@@ -66,6 +66,10 @@ flowchart LR
 | 10 | Lines repeated exactly within a sheet (same invoice, product, quantity, price and minute) are dropped and counted: 11,812 rows, 32,065 units (Day 2) | Almost certainly double entry. It's 0.3% of units, so the choice barely moves the totals either way |
 | 11 | Products are codes matching `^\d{5}[A-Za-z]{0,2}$`; everything else is dropped and counted by code (Day 2) | An allow-list can't miss a new fee code the way a deny-list (POST, DOT, M, BANK CHARGES...) can |
 | 12 | The 100 products are picked once, on data before the first backtest origin (16 Apr 2011), and the set stays fixed (Day 2) | Picking on data up to the holdout would favour products that were still selling in October: survivorship leakage into every earlier origin |
+| 13 | EDA uses only data before the holdout (Day 3) | Whatever the EDA shows shapes the models. If it saw the holdout, the holdout would no longer be an unseen test |
+| 14 | Monthly and seasonal comparisons use units per open day, not totals (Day 3) | December has 20 open days, not 26. Totals made it look like demand halved; per open day it fell 35% |
+| 15 | MAE and wMAPE lead; RMSE is reported but not used to pick models (Day 3) | Daily amounts are erratic (median CV² 2.2), and RMSE squares the few huge days, so one wholesale order would decide the ranking |
+| 16 | No Croston-type methods for intermittent demand (Day 3) | All 100 products sell on 71% or more of open days. The problem is the size of each day's sales, not the zeros |
 
 ## Limitations (known before starting)
 

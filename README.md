@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 8 of 11).
+**Status:** in progress (day 9 of 11).
 
 ## So far
 
@@ -127,6 +127,17 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 **Pick for the holdout: LightGBM without the weeks-to-Christmas feature**, for products and the total, scored once alongside ETS and the weekday mean. It's clearly better per product (23 of 26 origins, -3% bias) and ties on the total. The backtest mostly misses the autumn peak, so expect the holdout error to be higher.
 
 11 tests: averaging keeps actuals and drops rows a model lacks, the paired difference by hand with its interval, error on flagged days by hand, a series that never sold, and the new LightGBM variants.
+
+**Error against horizon, and prediction intervals** ([intervals.py](src/demand/intervals.py)). The backtest is rerun with each origin moved one weekday along, so "3 days ahead" is no longer always a Tuesday. Then 80% intervals: for each horizon, the errors at the first 13 origins are scaled by each product's recent level, and their 10th and 90th percentiles become the interval. Whether that covers 80% is measured on the last 13 origins, which the intervals were not set on.
+
+![Error by horizon, and interval coverage by month](reports/figures/horizon_intervals.png)
+
+- **Error doesn't grow with horizon.** With origins spread over the week, LightGBM's wMAPE stays between 0.84 and 0.94 from 1 to 14 days ahead, with no trend. The Sunday spikes on Day 5 were the weekday, not the horizon. A product's day is so noisy that knowing yesterday barely helps more than knowing last week.
+- **The 80% intervals cover 78% on later origins**: 75% in July, 79% in September, 84% in October (October rests on only 2 origins). Close to the promise, even through the September step.
+- **They are wide:** on average 2.3 times a product's usual daily sales from bottom to top. That's the honest size of the uncertainty for one product on one day; summed over a week or a reorder cycle it shrinks.
+- **But they fit the average product, not each one.** Per product, coverage runs from 29% to 98%, and 11 of the 100 products are under 60%. One set of quantiles for everything is too narrow for the erratic products and too wide for the steady ones. Quantiles per demand class (how often a product sells, Day 8) are the next step.
+
+7 tests: staggered origins cycle through the six trading weekdays, levels use only days before the origin, intervals cover about what they promise on new data from the same process, under-cover when errors grow, never go below zero, and refuse horizons or origins they have no numbers for.
 
 ## Planned approach
 

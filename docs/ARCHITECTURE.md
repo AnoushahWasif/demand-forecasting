@@ -85,6 +85,9 @@ flowchart LR
 | 29 | Models are compared origin by origin against ETS, with a 95% bootstrap interval that resamples whole origins (Day 8) | Pooled scores a hundredth apart are noise. Days inside one origin's window share a lot, so resampling days would give intervals that are too narrow |
 | 30 | The weeks-to-Christmas feature is dropped (Day 8) | With one earlier autumn it learned 2010's calendar: 21% of the gain, no gain in score. A seasonal feature needs more than one season to learn from |
 | 31 | LightGBM without that feature goes to the holdout, for products and the total, with ETS and the weekday mean as references (Day 8) | Clearly best per product; on the total nothing is clearly better, and one model keeps the pipeline simple. Picked on the backtest only, before the holdout is touched |
+| 32 | Error by horizon is measured on origins staggered across the six trading weekdays (Day 9) | With every origin on a Saturday, each horizon always fell on the same weekday, and "error by horizon" was really error by weekday |
+| 33 | 80% intervals from level-scaled backtest errors per horizon, set on the first half of the origins and checked on the second (Day 9) | One method for every product, no distribution assumed, and the coverage figure comes from origins the intervals never saw |
+| 34 | Interval coverage is reported per product too, not only pooled (Day 9) | Pooled it's 78%; per product it's 29% to 98%. The pooled number alone would hide that the erratic products get intervals that are too narrow |
 
 ## Limitations (known before starting)
 

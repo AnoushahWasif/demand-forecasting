@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 4 of 11).
+**Status:** in progress (day 5 of 11).
 
 ## So far
 
@@ -52,6 +52,23 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 - **One origin is noisy.** Besides Saturdays, the shop was shut on five days in or just before this window (Good Friday, Easter Sunday and Monday, the 29 April royal wedding holiday, 2 May), so a weekday copy often comes from an unusual week. Day 5 scores all 26 origins before any of these numbers are trusted.
 
 30 tests: the split never puts a day at or after the origin into history, never reaches the holdout, skips closed days, and refuses an origin inside the holdout; each baseline refuses to forecast dates inside its history; metrics refuse mismatched or non-finite forecasts and return no wMAPE for a window with no sales.
+
+**Rolling backtest** ([backtest.py](src/demand/backtest.py), [calendar.py](src/demand/calendar.py)). Every forecaster runs at 26 weekly origins from 16 April to 8 October 2011. Each gets a copy of the data before its origin and nothing else, and forecasts the next 14 open days, cut at the holdout. The forecast dates come from a calendar of planned closures (Saturdays, 24 December to 3 January, Easter, bank holidays including the royal wedding), not from the data. It matches every day in the data except one open Saturday in December 2009, so the backtest isn't quietly told about closures in advance.
+
+![Baseline error at each origin and by horizon](reports/figures/backtest_baselines.png)
+
+| Baseline | Products wMAPE | Median per-product wMAPE | Daily total wMAPE | MAE vs seasonal naive |
+|---|---:|---:|---:|---:|
+| naive | 1.12 | 1.07 | 0.38 | 5% better (products), 1% worse (total) |
+| seasonal naive | 1.18 | 1.23 | 0.38 | reference |
+| mean of last 4 same weekdays | **1.00** | **1.05** | **0.32** | 15% better (products), 16% better (total) |
+
+- **The 4-week weekday mean is the baseline to beat, at both levels.** The single origin on Day 4 said seasonal naive was best for the total; over 26 origins it isn't. One origin was noise.
+- **One order can wreck a forecast.** Naive's spike at the end of May is one product: 4,314 units on Friday 27 May, against a usual 30 to 70 a day. Naive copied it 14 times, and that product alone is 54% of the error at that origin.
+- **Horizon here mostly means weekday.** Every origin is a Saturday, so 1 day ahead is always a Sunday, the smallest day with the largest relative error. From 2 to 14 days ahead the error barely grows. Day 9 staggers the origins so error by horizon can be separated from error by weekday.
+- The last origin only reaches 6 open days before the holdout, so horizons 7 to 14 rest on 24 or 25 origins, not 26. The report lists the count for each horizon.
+
+15 tests on top: a spy forecaster checks that no forecaster ever sees a day at or after its origin; multiplying every future value by 1,000 leaves every baseline's forecasts unchanged (this test runs for every model added to the registry); a forecaster that edits its input can't affect the next; forecasts for the wrong dates and a closure the calendar didn't plan are refused; pooled wMAPE must lie between the per-horizon values. That last test was added after the first chart showed it didn't: the per-horizon product numbers had the shop total mixed in.
 
 ## Planned approach
 

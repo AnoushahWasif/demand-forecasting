@@ -215,10 +215,10 @@ if __name__ == "__main__":
     saved = {"all": out / "backtest_results.parquet", "total": out / "backtest_total.parquet"}
     counts_path = out / "backtest_fallbacks.json"
     if args.add:
-        from demand.models.gbm import lightgbm
+        from demand.models.gbm import VARIANTS
         from demand.models.statistical import MODELS
 
-        registry = dict(BASELINES) | MODELS | {"lightgbm": lightgbm}
+        registry = dict(BASELINES) | MODELS | VARIANTS
         unknown = set(args.add) - set(registry)
         if unknown:
             raise SystemExit(f"unknown models: {sorted(unknown)}")
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     lower = [m for m in summary if product(m, "wmape") < product(best, "wmape")]
     if lower:
         trap = min(lower, key=lambda m: product(m, "wmape"))
-        title += f"; {LABELS.get(trap, trap)} is lower but {product(trap, 'bias'):+.0%} on units"
+        title += f"\n{LABELS.get(trap, trap)} is lower but {product(trap, 'bias'):+.0%} on units"
     plot_backtest(summary, origins()[0], title, Path("reports/figures/backtest.png"))
     for name, r in summary.items():
         p, t = r["products"], r["total"]

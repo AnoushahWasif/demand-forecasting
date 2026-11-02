@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 7 of 11).
+**Status:** in progress (day 8 of 11).
 
 ## So far
 
@@ -102,6 +102,31 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 - It still under-forecasts September (92% of units sold), a little less than ETS (89%).
 
 12 tests: features are scaled per product, a product that never sold divides safely, closures and Christmas are known in the calendar features, every training target lies inside the history, training features for a past origin don't change when everything after it is multiplied by 1,000, the model learns a weekly shape for a big and a small seller alike, it's repeatable, and the poisoned-future backtest test passes.
+
+**Model comparison** ([notebook](notebooks/02_model_comparison.ipynb), [compare.py](src/demand/compare.py)). Several models now sit within a few hundredths of each other, so each is compared with ETS origin by origin, with a 95% interval from resampling whole origins.
+
+![Each model minus ETS, with 95% intervals](reports/figures/compare_vs_ets.png)
+
+| Against ETS (wMAPE difference) | Products | Origins better | Shop total |
+|---|---:|---:|---:|
+| weekday mean | +0.059 (+0.030 to +0.087) | 3 of 26 | +0.012 (-0.008 to +0.032) |
+| LightGBM | -0.048 (-0.084 to -0.015) | 17 | +0.014 (-0.008 to +0.038) |
+| LightGBM, no weeks-to-Christmas feature | **-0.058 (-0.086 to -0.035)** | **23** | -0.003 (-0.014 to +0.009) |
+| LightGBM trained on products only | -0.049 (-0.085 to -0.014) | 18 | +0.029 (+0.007 to +0.050) |
+| average of ETS and LightGBM | -0.037 (-0.056 to -0.020) | 20 | -0.004 (-0.015 to +0.007) |
+
+- **Per product, LightGBM is clearly better than ETS**, in every version.
+- **On the shop total, nothing is clearly better than anything.** Even ETS against the weekday mean is within noise there. Day 6's "4% better on the total" was real arithmetic, but not a real difference.
+- **The weeks-to-Christmas feature was memorising.** It carried 21% of LightGBM's gain on Day 7. Without it, the product score is within noise of the full model and the total gets a bit better (0.321 to 0.304). Learned from one autumn, it was a calendar, not a rule.
+- **Training without the shop total hurts the total** and changes nothing for products, so the total stays in training.
+
+**Where forecasts fail.** Product-days with a large order are 2% of days and 23% of units, and carry 20 to 23% of the error: in proportion, not out of it. The bigger split is between products. The ones forecast worst are those that sell less often and less (rank correlation of wMAPE with open days per selling day: 0.74; with level: -0.62). The best products are forecast at about 0.6 wMAPE, the worst at 1.5 to 2.
+
+![Error per product against how often it sells](reports/figures/compare_by_product.png)
+
+**Pick for the holdout: LightGBM without the weeks-to-Christmas feature**, for products and the total, scored once alongside ETS and the weekday mean. It's clearly better per product (23 of 26 origins, -3% bias) and ties on the total. The backtest mostly misses the autumn peak, so expect the holdout error to be higher.
+
+11 tests: averaging keeps actuals and drops rows a model lacks, the paired difference by hand with its interval, error on flagged days by hand, a series that never sold, and the new LightGBM variants.
 
 ## Planned approach
 

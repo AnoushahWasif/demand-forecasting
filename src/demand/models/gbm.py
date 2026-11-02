@@ -25,18 +25,38 @@ PARAMS = {
 ROUNDS = 300
 
 
-def lightgbm(history: pd.DataFrame, dates: pd.DatetimeIndex) -> pd.DataFrame:
-    import lightgbm as lgb
+def make_lightgbm(features: list[str] = FEATURES, train_on_total: bool = True):
+    """A LightGBM forecaster. The options exist for the Day 8 ablations."""
+    from demand.series import TOTAL
 
-    if len(dates) and dates.min() <= history.index.max():
-        raise ValueError("forecast dates must come after the history")
-    if len(history) < RECENT + HORIZON:
-        raise ValueError("not enough history to train on")
-    train = training_set(history, HORIZON)
-    model = lgb.train(PARAMS, lgb.Dataset(train[FEATURES], train["target"]), ROUNDS)
-    pred = rows(history, dates)
-    pred["forecast"] = np.clip(model.predict(pred[FEATURES]), 0, None) * pred["scale"]
-    wide = pred.pivot(index="date", columns="series", values="forecast")
-    forecast = wide.reindex(index=dates, columns=history.columns)
-    forecast.attrs["fallbacks"] = 0
-    return forecast
+    unknown = set(features) - set(FEATURES)
+    if unknown or not features:
+        raise ValueError(f"unknown or no features: {sorted(unknown)}")
+
+    def lightgbm(history: pd.DataFrame, dates: pd.DatetimeIndex) -> pd.DataFrame:
+        import lightgbm as lgb
+
+        if len(dates) and dates.min() <= history.index.max():
+            raise ValueError("forecast dates must come after the history")
+        if len(history) < RECENT + HORIZON:
+            raise ValueError("not enough history to train on")
+        train = training_set(history, HORIZON)
+        if not train_on_total:
+            train = train[train["series"] != TOTAL]
+        model = lgb.train(PARAMS, lgb.Dataset(train[features], train["target"]), ROUNDS)
+        pred = rows(history, dates)
+        pred["forecast"] = np.clip(model.predict(pred[features]), 0, None) * pred["scale"]
+        wide = pred.pivot(index="date", columns="series", values="forecast")
+        forecast = wide.reindex(index=dates, columns=history.columns)
+        forecast.attrs["fallbacks"] = 0
+        return forecast
+
+    return lightgbm
+
+
+lightgbm = make_lightgbm()
+VARIANTS = {
+    "lightgbm": lightgbm,
+    "lightgbm_no_christmas": make_lightgbm([f for f in FEATURES if f != "weeks_to_christmas"]),
+    "lightgbm_products_only": make_lightgbm(train_on_total=False),
+}

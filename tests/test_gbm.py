@@ -137,3 +137,20 @@ def test_lightgbm_never_sees_the_future():
     a = run_backtest(clean, {"lightgbm": lightgbm}, [origin], stop=stop)
     b = run_backtest(poisoned, {"lightgbm": lightgbm}, [origin], stop=stop)
     assert np.allclose(a["forecast"], b["forecast"])
+
+
+def test_variants_refuse_unknown_or_no_features():
+    from demand.models.gbm import make_lightgbm
+
+    with pytest.raises(ValueError, match="unknown"):
+        make_lightgbm(["level_log", "tomorrow_sales"])
+    with pytest.raises(ValueError):
+        make_lightgbm([])
+
+
+def test_products_only_variant_still_forecasts_the_total():
+    from demand.models.gbm import VARIANTS
+
+    history = panel()
+    fc = VARIANTS["lightgbm_products_only"](history, next_dates(history, 3))
+    assert fc[TOTAL].notna().all() and (fc[TOTAL] > 0).all()

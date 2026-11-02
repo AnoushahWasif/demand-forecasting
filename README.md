@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 5 of 11).
+**Status:** in progress (day 6 of 11).
 
 ## So far
 
@@ -55,7 +55,7 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 
 **Rolling backtest** ([backtest.py](src/demand/backtest.py), [calendar.py](src/demand/calendar.py)). Every forecaster runs at 26 weekly origins from 16 April to 8 October 2011. Each gets a copy of the data before its origin and nothing else, and forecasts the next 14 open days, cut at the holdout. The forecast dates come from a calendar of planned closures (Saturdays, 24 December to 3 January, Easter, bank holidays including the royal wedding), not from the data. It matches every day in the data except one open Saturday in December 2009, so the backtest isn't quietly told about closures in advance.
 
-![Baseline error at each origin and by horizon](reports/figures/backtest_baselines.png)
+![Baseline error at each origin and by horizon](reports/figures/backtest.png)
 
 | Baseline | Products wMAPE | Median per-product wMAPE | Daily total wMAPE | MAE vs seasonal naive |
 |---|---:|---:|---:|---:|
@@ -69,6 +69,24 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 - The last origin only reaches 6 open days before the holdout, so horizons 7 to 14 rest on 24 or 25 origins, not 26. The report lists the count for each horizon.
 
 18 tests on top: a spy forecaster checks that no forecaster ever sees a day at or after its origin; multiplying every future value by 1,000 leaves every baseline's forecasts unchanged (this test runs for every model added to the registry); a forecaster that edits its input can't affect the next; forecasts for the wrong dates or with missing values, a closure the calendar didn't plan, and dates outside the calendar's years are refused; pooled wMAPE must lie between the per-horizon values. That last test was added after the first chart showed it didn't: the per-horizon product numbers had the shop total mixed in.
+
+**Exponential smoothing and SARIMA** ([statistical.py](src/demand/models/statistical.py)). ETS with a level and an additive weekly season (6 open days, no trend, since Day 3 found no growth) for every product, once on units and once on log(1 + units). SARIMA(1,0,1)(0,1,1)6 for the shop total only, because one fit takes seconds. A fit that fails or returns something absurd falls back to the weekday mean and is counted: none did, out of 2,626 ETS forecasts and 26 SARIMA ones. Same 26 origins:
+
+![Error at each origin and by horizon, all models](reports/figures/backtest.png)
+
+| Model | Products wMAPE | Median per product | MAE vs weekday mean | Bias (products) | Total wMAPE | Bias (total) |
+|---|---:|---:|---:|---:|---:|---:|
+| mean of last 4 same weekdays | 1.00 | 1.05 | reference | -1% | **0.32** | -7% |
+| ETS | **0.95** | **1.01** | 5% better | +4% | 0.35 | -3% |
+| ETS on log units | 0.80 | 0.86 | 20% better | **-49%** | 0.35 | -10% |
+| SARIMA | | | | | 0.35 | -4% |
+
+- **The lowest error is a trap.** ETS on log units wins every error score, but it forecasts only half the units that sold. It learns the typical day and ignores large orders. MAE rewards that, and a buyer who restocked from it would run out. That's why every score now comes with bias (units forecast / units sold - 1).
+- **ETS is the honest winner per product,** by 5%. That's small; Day 7's LightGBM has to beat it, not the baselines.
+- **Nothing beats the weekday mean on the shop total.** ETS and SARIMA are about 10% worse there. The total is smooth, and a 4-week average of the same weekday is already a good forecast of a smooth weekly series.
+- **Every model under-forecasts September**: from origins in September, the shop-total forecasts come to 75 to 88% of units sold. It's the step up Day 3 found, and the holdout is all peak season.
+
+13 tests: a clean weekly pattern is learned by all three, forecasts are never negative, the log model is moved less by one huge order, too-short or constant history and failed or absurd fits fall back and are counted, and the poisoned-future leak test passes for both ETS models.
 
 ## Planned approach
 

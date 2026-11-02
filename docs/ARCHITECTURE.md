@@ -55,13 +55,17 @@ flowchart LR
 | # | Decision | Why |
 |---|----------|-----|
 | 1 | Demand means gross sales; returns are measured but not subtracted | A return days later says nothing about what will sell tomorrow. The return rate gets reported separately so it isn't lost |
-| 2 | A cancellation removes the sale it cancels (same customer, product and quantity) when one can be found; otherwise only the cancellation line is dropped | Some huge orders were entered and cancelled the same day. Keeping the order and dropping only the cancellation would create demand that never happened |
+| 2 | A cancellation takes its units off the same customer's earlier sales of that product, newest first, never below zero. Cancellations with no customer id or no earlier sale only lose their own line (changed on Day 2) | Only 36% of cancellations match a sale of exactly the same quantity; most are partial. Matching on equal quantity would have left about 64% of cancellations removing nothing, their units counted as demand. Two huge orders (80,995 and 74,215 units) were entered and cancelled within minutes |
 | 3 | `Customer ID` is used only to match cancellations, then dropped. It never reaches processed data, reports or forecasts | The model doesn't need it, and it's the closest thing to personal data in the set |
 | 4 | Product choice, scaling and every feature are computed only from data before each forecast origin, and tests check this by changing future rows and asserting the forecast doesn't move | Look-ahead leakage is the most common way a forecast looks better than it is |
 | 5 | Very large single orders stay in the data, are flagged, and get a backtest with and without them | They're real wholesale demand, but one of them can swamp a product's error. Showing both is more honest than quietly capping |
 | 6 | LightGBM models are saved in its text format, never pickled. statsmodels results are saved with a SHA-256 manifest that is checked before loading | Loading a pickle runs code, so a swapped file mustn't load silently. Same approach as `customer-churn-prediction` |
 | 7 | The forecast CSV escapes text cells starting with `=`, `+`, `-`, `@`, tab or carriage return | Product descriptions come from the data and the file will be opened in Excel (formula injection) |
 | 8 | Every run writes the data hash, parameters and git commit next to its results | A number in the README can be traced to the exact run that produced it |
+| 9 | The two sheets overlap from 1 to 9 Dec 2010 (the same 1,088 invoices). Each sheet is used only on its side of 1 Dec 2010 (Day 2) | A blanket duplicate drop would also remove repeats inside a sheet, which are a separate question |
+| 10 | Lines repeated exactly within a sheet (same invoice, product, quantity, price and minute) are dropped and counted: 11,812 rows, 32,065 units (Day 2) | Almost certainly double entry. It's 0.3% of units, so the choice barely moves the totals either way |
+| 11 | Products are codes matching `^\d{5}[A-Za-z]{0,2}$`; everything else is dropped and counted by code (Day 2) | An allow-list can't miss a new fee code the way a deny-list (POST, DOT, M, BANK CHARGES...) can |
+| 12 | The 100 products are picked once, on data before the first backtest origin (16 Apr 2011), and the set stays fixed (Day 2) | Picking on data up to the holdout would favour products that were still selling in October: survivorship leakage into every earlier origin |
 
 ## Limitations (known before starting)
 

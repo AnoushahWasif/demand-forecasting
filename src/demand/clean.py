@@ -61,6 +61,8 @@ def match_cancellations(sales: pd.DataFrame, cancels: pd.DataFrame) -> tuple[pd.
 
 
 def flag_large_orders(df: pd.DataFrame) -> pd.Series:
+    # The median spans all dates, holdout included. Fine for the with/without comparison;
+    # it must never become a model feature, or it leaks the future (decision 4).
     median = df.groupby("StockCode")["Quantity"].transform("median")
     return (df["Quantity"] >= LARGE_FACTOR * median) & (df["Quantity"] >= LARGE_MIN)
 

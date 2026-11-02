@@ -76,17 +76,17 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 
 | Model | Products wMAPE | Median per product | MAE vs weekday mean | Bias (products) | Total wMAPE | Bias (total) |
 |---|---:|---:|---:|---:|---:|---:|
-| mean of last 4 same weekdays | 1.00 | 1.05 | reference | -1% | **0.32** | -7% |
-| ETS | **0.95** | **1.01** | 5% better | +4% | 0.35 | -3% |
-| ETS on log units | 0.80 | 0.86 | 20% better | **-49%** | 0.35 | -10% |
-| SARIMA | | | | | 0.35 | -4% |
+| mean of last 4 same weekdays | 1.00 | 1.05 | reference | -1% | 0.32 | -7% |
+| ETS | **0.94** | **0.97** | 6% better | +3% | **0.31** | -3% |
+| ETS on log units | 0.78 | 0.84 | 22% better | **-48%** | 0.30 | -8% |
+| SARIMA | | | | | 0.31 | -5% |
 
 - **The lowest error is a trap.** ETS on log units wins every error score, but it forecasts only half the units that sold. It learns the typical day and ignores large orders. MAE rewards that, and a buyer who restocked from it would run out. That's why every score now comes with bias (units forecast / units sold - 1).
-- **ETS is the honest winner per product,** by 5%. That's small; Day 7's LightGBM has to beat it, not the baselines.
-- **Nothing beats the weekday mean on the shop total.** ETS and SARIMA are about 10% worse there. The total is smooth, and a 4-week average of the same weekday is already a good forecast of a smooth weekly series.
+- **ETS is the honest winner, but only just:** 6% less error per product and 4% on the total than the 4-week weekday mean. Day 7's LightGBM has to beat ETS, not the baselines.
+- **Holidays nearly hid that.** The first run fitted the models on rows, so each bank holiday shifted the weekly cycle by one day from then on, and a closure inside a forecast window shifted the forecast too. ETS and SARIMA then lost to the weekday mean on the total by 10%. Fitting on a Sunday-to-Friday grid, with closures filled from the week before, turned that into a 4% win.
 - **Every model under-forecasts September**: from origins in September, the shop-total forecasts come to 75 to 88% of units sold. It's the step up Day 3 found, and the holdout is all peak season.
 
-13 tests: a clean weekly pattern is learned by all three, forecasts are never negative, the log model is moved less by one huge order, too-short or constant history and failed or absurd fits fall back and are counted, and the poisoned-future leak test passes for both ETS models.
+17 tests: a clean weekly pattern is learned by all three, a closed weekday in the history or inside the forecast window doesn't shift it, a Saturday forecast is refused, forecasts are never negative, the log model is moved less by one huge order, too-short or constant history and failed or absurd fits fall back and are counted, and the poisoned-future leak test passes for both ETS models.
 
 ## Planned approach
 

@@ -77,7 +77,7 @@ flowchart LR
 | 21 | One harness runs every forecaster and hands it only a copy of the history; a poisoned-future test covers every registered model (Day 5) | The leak test lives in one place and new models get it for free. A copy stops a model that edits its input from changing what the next one sees |
 | 22 | The median per-product wMAPE is reported next to the pooled one (Day 5) | Pooled numbers are dominated by the best sellers. A model could win them by getting a few big products right |
 | 23 | Every score comes with bias, and a model more than 10% off on units can't be picked on MAE or wMAPE alone (Day 6) | MAE is lowest for a forecast of the typical day. On sales with large orders that means forecasting too few units: ETS on log units scored best and forecast half of what sold |
-| 24 | ETS with a level and a weekly season of 6 open days, no trend; SARIMA only for the shop total (Day 6) | Day 3 found no growth to model. SARIMA takes seconds per fit, too slow for 2,626 product forecasts on a laptop |
+| 24 | ETS with a level and a weekly season of 6 open days, no trend, fitted on a Sunday-to-Friday grid with closures filled from the week before; SARIMA only for the shop total (Day 6) | Day 3 found no growth to model. Fitting on rows let every bank holiday shift the weekly cycle for good (it cost 10% on the total). SARIMA takes seconds per fit, too slow for 2,626 product forecasts on a laptop |
 | 25 | A failed or absurd fit falls back to the weekday mean, and the fallbacks are counted and reported (Day 6) | A model that quietly became the baseline would look as good as the baseline with nobody noticing |
 
 ## Limitations (known before starting)

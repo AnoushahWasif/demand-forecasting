@@ -70,6 +70,9 @@ flowchart LR
 | 14 | Monthly and seasonal comparisons use units per open day, not totals (Day 3) | December has 20 open days, not 26. Totals made it look like demand halved; per open day it fell 35% |
 | 15 | MAE and wMAPE lead; RMSE is reported but not used to pick models (Day 3) | Daily amounts are erratic (median CV² 2.2), and RMSE squares the few huge days, so one wholesale order would decide the ranking |
 | 16 | No Croston-type methods for intermittent demand (Day 3) | All 100 products sell on 71% or more of open days. The problem is the size of each day's sales, not the zeros |
+| 17 | Horizons count open days, and a forecast window stops where the holdout starts (Day 4) | A closed Saturday has nothing to forecast. Cutting at the holdout means the last backtest origins get fewer steps instead of a peek at the holdout |
+| 18 | A third baseline: the mean of the last 4 same weekdays (Day 4) | Per product, seasonal naive copies one noisy day and is the weakest baseline. A model has to beat the best simple forecast to count, not the easiest one |
+| 19 | Products and the daily total are scored separately (Day 4) | They behave differently: the total is smooth with a strong weekday shape, single products are noise-dominated. Pooling them would let the total's large numbers hide the product error |
 
 ## Limitations (known before starting)
 

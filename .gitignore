@@ -13,7 +13,7 @@ dist/
 
 # Data and trained models are rebuilt by scripts, not committed
 data/
-models/
+/models/
 
 # Local env
 .env

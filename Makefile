@@ -1,4 +1,4 @@
-.PHONY: install lint format test
+.PHONY: install lint format test data
 
 install:
 	uv sync
@@ -13,3 +13,6 @@ format:
 
 test:
 	uv run pytest
+
+data:
+	uv run python -m demand.build

@@ -4,7 +4,26 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 1 of 11). Results will go here once there are any.
+**Status:** in progress (day 2 of 11).
+
+## So far
+
+**Cleaning** ([clean.py](src/demand/clean.py)). 1,044,848 invoice lines go in (after cutting the 22,523 rows the two sheets share) and 997,186 completed product sales come out. Each step is counted in `reports/cleaning.json`:
+
+| Step | Rows removed |
+|------|-------------:|
+| Lines entered twice | 11,812 |
+| Cancellation lines (their units come off the sales they cancel, below) | 19,104 |
+| Postage, fees, manual adjustments, vouchers (anything not a 5-digit product code) | 4,784 |
+| Stock write-offs and zero prices | 5,928 |
+| Sales cancelled in full | 6,028 |
+| Bad-debt adjustments | 6 |
+
+Cancellations were the interesting part. Only 36% cancel a sale of exactly the same quantity, so each cancellation instead takes its units off the same customer's earlier sales of that product, newest first. That removes 450,259 cancelled units. 17,480 units couldn't be matched (no customer id, or the sale was before the data starts) and are reported, not guessed. Two orders of 80,995 and 74,215 units, each cancelled within minutes, are gone.
+
+Large orders stay in but are flagged: 7,335 lines (0.7%) carry 2.4 million units, 22% of all demand. That's wholesale lumpiness the models will have to live with. Day 8 compares results with and without them.
+
+**Daily series** ([series.py](src/demand/series.py)). The shop traded on 604 days and was closed on 135: 104 Saturdays plus Christmas and bank holidays. Closed days are left out instead of counted as zero sales. The 100 products that sold on the most days before 16 Apr 2011 (picked before any backtest data, so no look-ahead) make up 20.5% of units and still have no sales on 14% of open days.
 
 ## Planned approach
 
@@ -27,6 +46,7 @@ Python 3.12, uv, pandas, statsmodels, LightGBM, matplotlib, pytest, ruff. CI: Gi
 ```bash
 uv sync
 make lint test
+make data   # downloads 46 MB, checks its SHA-256, builds the daily series
 ```
 
 ## Architecture

@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 2 of 11).
+**Status:** in progress (day 3 of 11).
 
 ## So far
 
@@ -24,6 +24,19 @@ Cancellations were the interesting part. Only 36% cancel a sale of exactly the s
 Large orders stay in but are flagged: 7,335 lines (0.7%) carry 2.4 million units, 22% of all demand. That's wholesale lumpiness the models will have to live with. Day 8 compares results with and without them.
 
 **Daily series** ([series.py](src/demand/series.py)). The shop traded on 604 days and was closed on 135: 104 Saturdays plus Christmas and bank holidays. Closed days are left out instead of counted as zero sales. The 100 products that sold on the most days before 16 Apr 2011 (picked before any backtest data, so no look-ahead) make up 20.5% of units and still have no sales on 14% of open days.
+
+**EDA** ([notebook](notebooks/01_eda.ipynb), [eda.py](src/demand/eda.py)). Only data before the 15 Oct 2011 holdout, so the holdout stays unseen.
+
+![Units per open day by month](reports/figures/eda_season.png)
+
+- **The peak is November, not December.** From September, sales per open day run 1.54 times the January to August level in 2010 and 1.55 times in 2011. The customers are mostly wholesalers stocking up for Christmas. December is 35% below November even per open day, so the drop isn't only the shop closing from 24 December.
+- **No growth to model.** January to August 2011 is slightly below 2010.
+- **Thursday sells 1.23 times an average open day, Sunday 0.57.** Saturday is closed. The seasonal-naive baseline should copy the same weekday last week, not yesterday.
+- **Every product sells on most open days, but the amounts swing.** All 100 are "erratic" or "lumpy" by the usual cut-offs. Zeros aren't the problem, so Croston-style methods aren't needed. Without large orders, the median variation (CV²) halves from 2.2 to 1.1, but 99 of 100 are still erratic or lumpy.
+
+![Demand classes with and without large orders](reports/figures/eda_demand_classes.png)
+
+What this changes for the next days: the backtest's 26 weekly origins run from April to October, and only the last 8 forecast into September. The holdout is all peak season. So backtest errors will look better than holdout errors, and a model that can't follow the season will look better than it is until the holdout. MAE and wMAPE are the main metrics, because RMSE gets pulled around by a few huge days. 11 tests.
 
 ## Planned approach
 

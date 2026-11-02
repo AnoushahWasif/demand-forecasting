@@ -52,3 +52,10 @@ def test_skill():
     assert skill(8, 10) == pytest.approx(0.2)
     assert skill(12, 10) == pytest.approx(-0.2)
     assert skill(1, 0) is None
+
+
+def test_from_arrays_refuses_nothing():
+    from demand.metrics import from_arrays
+
+    with pytest.raises(ValueError, match="nothing"):
+        from_arrays(np.array([]), np.array([]))

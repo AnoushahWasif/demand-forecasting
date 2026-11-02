@@ -17,8 +17,16 @@ def scores(actual: pd.DataFrame, forecast: pd.DataFrame) -> dict:
 
     wMAPE is None when nothing sold at all in the window: any error would be infinite.
     """
-    e = _errors(actual, forecast).to_numpy()
-    sold = float(np.abs(actual.to_numpy(dtype=float)).sum())
+    _errors(actual, forecast)
+    return from_arrays(actual.to_numpy(dtype=float), forecast.to_numpy(dtype=float))
+
+
+def from_arrays(actual: np.ndarray, forecast: np.ndarray) -> dict:
+    """The same three scores from flat arrays of matching shape."""
+    if actual.size == 0:
+        raise ValueError("nothing to score")
+    e = np.asarray(forecast, dtype=float) - np.asarray(actual, dtype=float)
+    sold = float(np.abs(actual).sum())
     return {
         "mae": float(np.abs(e).mean()),
         "rmse": float(np.sqrt((e**2).mean())),

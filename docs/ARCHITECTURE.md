@@ -73,6 +73,9 @@ flowchart LR
 | 17 | Horizons count open days, and a forecast window stops where the holdout starts (Day 4) | A closed Saturday has nothing to forecast. Cutting at the holdout means the last backtest origins get fewer steps instead of a peek at the holdout |
 | 18 | A third baseline: the mean of the last 4 same weekdays (Day 4) | Per product, seasonal naive copies one noisy day and is the weakest baseline. A model has to beat the best simple forecast to count, not the easiest one |
 | 19 | Products and the daily total are scored separately (Day 4) | They behave differently: the total is smooth with a strong weekday shape, single products are noise-dominated. Pooling them would let the total's large numbers hide the product error |
+| 20 | Forecast dates come from a calendar of planned closures, checked against the data (Day 5) | Taking them from the data would tell every forecaster about closures in hindsight. All 31 non-Saturday closures were planned (Christmas, Easter, bank holidays), so the calendar matches; the backtest refuses an origin where it doesn't |
+| 21 | One harness runs every forecaster and hands it only a copy of the history; a poisoned-future test covers every registered model (Day 5) | The leak test lives in one place and new models get it for free. A copy stops a model that edits its input from changing what the next one sees |
+| 22 | The median per-product wMAPE is reported next to the pooled one (Day 5) | Pooled numbers are dominated by the best sellers. A model could win them by getting a few big products right |
 
 ## Limitations (known before starting)
 

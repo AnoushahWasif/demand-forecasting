@@ -67,3 +67,34 @@ def error_on_flagged_days(results: pd.DataFrame, days: pd.DataFrame) -> pd.DataF
             else np.nan,
         }
     return pd.DataFrame.from_dict(rows, orient="index")
+
+
+def paired_difference(results: pd.DataFrame, a: str, b: str, rounds: int = 2_000, seed: int = 0):
+    """wMAPE of model a minus model b, origin by origin, with a bootstrap interval over origins.
+
+    Origins are resampled whole, because days inside one origin's window share a lot.
+    """
+    abs_error = (results["forecast"] - results["actual"]).abs()
+    per = (
+        results.assign(abs_error=abs_error)
+        .groupby(["origin", "model"])[["abs_error", "actual"]]
+        .sum()
+        .unstack("model")
+    )
+    for m in (a, b):
+        if m not in per["abs_error"]:
+            raise ValueError(f"no results for {m}")
+    err, sold = per["abs_error"], per["actual"][a]
+    rng = np.random.default_rng(seed)
+    picks = rng.integers(0, len(per), size=(rounds, len(per)))
+    diffs = (err[a].to_numpy()[picks].sum(1) - err[b].to_numpy()[picks].sum(1)) / sold.to_numpy()[
+        picks
+    ].sum(1)
+    low, high = np.percentile(diffs, [2.5, 97.5])
+    return {
+        "difference": float((err[a].sum() - err[b].sum()) / sold.sum()),
+        "low": float(low),
+        "high": float(high),
+        "origins_a_better": int((err[a] < err[b]).sum()),
+        "origins": len(per),
+    }

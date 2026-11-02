@@ -80,3 +80,15 @@ def test_error_on_flagged_days():
     assert out.loc["a", "flagged_share_of_error"] == pytest.approx(0.5)
     assert out.loc["a", "flagged_share_of_days"] == pytest.approx(1 / 3)
     assert out.loc["a", "flagged_share_of_units"] == pytest.approx(12 / 20)
+
+
+def test_paired_difference_by_hand_and_interval():
+    from demand.compare import paired_difference
+
+    out = paired_difference(BASE, "a", "b", rounds=200)
+    # a: |10-12|+|10-8|+0 = 4, b: 2+2+2 = 6, units sold 20.
+    assert out["difference"] == pytest.approx(-2 / 20)
+    assert out["low"] <= out["difference"] <= out["high"]
+    assert out["origins"] == 1 and out["origins_a_better"] == 1
+    with pytest.raises(ValueError, match="no results"):
+        paired_difference(BASE, "a", "zzz")

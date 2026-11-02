@@ -13,7 +13,7 @@ COLORS = {
     "naive": "#a3a29e",
     "ets": "#1baf7a",
     "ets_log": "#8a5cd0",
-    "lightgbm": "#0b0b0b",
+    "lightgbm_no_christmas": "#0b0b0b",
 }
 LABELS = {
     "weekday_mean_4": "mean of last 4 same weekdays",
@@ -22,6 +22,8 @@ LABELS = {
     "ets": "ETS",
     "ets_log": "ETS on log units",
     "lightgbm": "LightGBM",
+    "lightgbm_no_christmas": "LightGBM, no Christmas feature",
+    "lightgbm_products_only": "LightGBM trained on products only",
 }
 
 
@@ -38,8 +40,11 @@ def _style(ax) -> None:
 def plot_backtest(summary: dict, first_origin: pd.Timestamp, title: str, path: Path) -> None:
     """Products wMAPE at each origin, and by horizon labelled with the weekday it falls on."""
     fig, (left, right) = plt.subplots(1, 2, figsize=(10, 4), dpi=150, width_ratios=[3, 2])
+    # Only the models with a colour; the ablations are compared in notebook 02.
     for model, result in summary.items():
-        color, label = COLORS.get(model, MUTED), LABELS.get(model, model)
+        if model not in COLORS:
+            continue
+        color, label = COLORS[model], LABELS.get(model, model)
         by_origin = pd.Series(result["by_origin"])
         left.plot(pd.to_datetime(by_origin.index), by_origin.to_numpy(), color=color, lw=1.8,
                   marker="o", ms=3, label=label)  # fmt: skip

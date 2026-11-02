@@ -73,11 +73,15 @@ def score_baselines(wide: pd.DataFrame, origin: pd.Timestamp) -> dict:
 N_ORIGINS = 26
 
 
-def origins(first: pd.Timestamp | None = None, n: int = N_ORIGINS) -> list[pd.Timestamp]:
+def origins(
+    first: pd.Timestamp | None = None, n: int = N_ORIGINS, staggered: bool = False
+) -> list[pd.Timestamp]:
+    """Weekly origins. Staggered, each moves one more day along, cycling through the six
+    trading weekdays, so a given horizon doesn't always land on the same weekday."""
     from demand.series import FIRST_ORIGIN
 
     first = FIRST_ORIGIN if first is None else first
-    return [first + pd.Timedelta(weeks=k) for k in range(n)]
+    return [first + pd.Timedelta(days=7 * k + (k % 6 + 1 if staggered else 0)) for k in range(n)]
 
 
 def forecast_dates(

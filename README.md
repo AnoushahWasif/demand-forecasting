@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 6 of 11).
+**Status:** in progress (day 7 of 11).
 
 ## So far
 
@@ -87,6 +87,21 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 - **Every model under-forecasts September**: from origins in September, the shop-total forecasts come to 75 to 88% of units sold. It's the step up Day 3 found, and the holdout is all peak season.
 
 17 tests: a clean weekly pattern is learned by all three, a closed weekday in the history or inside the forecast window doesn't shift it, a Saturday forecast is refused, forecasts are never negative, the log model is moved less by one huge order, too-short or constant history and failed or absurd fits fall back and are counted, and the poisoned-future leak test passes for both ETS models.
+
+**LightGBM** ([features.py](src/demand/features.py), [gbm.py](src/demand/models/gbm.py)). One model across all products, retrained at every origin on that origin's history only. Each training row is a past origin, a product and one of the next 14 open days. Its features come only from data before that past origin: the recent level, last week's mean, the same-weekday mean, variability, the share of zero days. Calendar facts about the target date are added: weekday, steps ahead, weeks to Christmas, and whether it follows a closure. Everything is divided by the product's recent level, so a product selling 5 a day and one selling 500 share what they learn. The loss is Tweedie, which aims at the mean, not the median, to stay clear of the log model's bias.
+
+| Model | Products wMAPE | Median per product | Bias | MAE vs weekday mean | Total wMAPE |
+|---|---:|---:|---:|---:|---:|
+| mean of last 4 same weekdays | 1.00 | 1.05 | -1% | reference | 0.32 |
+| ETS | 0.94 | 0.97 | +3% | 6% better | **0.31** |
+| LightGBM | **0.89** | **0.96** | -1% | **11% better** | 0.32 |
+
+- **Best per product, with almost no bias, but the win is narrow.** LightGBM beats ETS on only 41 of the 100 products; its pooled lead comes from the big sellers. The median per product barely moves (0.96 against 0.97).
+- **No gain on the shop total.** ETS stays best there.
+- **What it uses:** the share of zero days (28% of the gain), the level (26%) and weeks to Christmas (21%). That last one is a risk. There's only one earlier autumn to learn from, so it may be learning 2010's calendar, not a rule. The holdout will say. Whether a day follows a closure barely matters (0.4%).
+- It still under-forecasts September (92% of units sold), a little less than ETS (89%).
+
+12 tests: features are scaled per product, a product that never sold divides safely, closures and Christmas are known in the calendar features, every training target lies inside the history, training features for a past origin don't change when everything after it is multiplied by 1,000, the model learns a weekly shape for a big and a small seller alike, it's repeatable, and the poisoned-future backtest test passes.
 
 ## Planned approach
 

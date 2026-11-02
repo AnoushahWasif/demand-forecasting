@@ -79,6 +79,9 @@ flowchart LR
 | 23 | Every score comes with bias, and a model more than 10% off on units can't be picked on MAE or wMAPE alone (Day 6) | MAE is lowest for a forecast of the typical day. On sales with large orders that means forecasting too few units: ETS on log units scored best and forecast half of what sold |
 | 24 | ETS with a level and a weekly season of 6 open days, no trend, fitted on a Sunday-to-Friday grid with closures filled from the week before; SARIMA only for the shop total (Day 6) | Day 3 found no growth to model. Fitting on rows let every bank holiday shift the weekly cycle for good (it cost 10% on the total). SARIMA takes seconds per fit, too slow for 2,626 product forecasts on a laptop |
 | 25 | A failed or absurd fit falls back to the weekday mean, and the fallbacks are counted and reported (Day 6) | A model that quietly became the baseline would look as good as the baseline with nobody noticing |
+| 26 | One LightGBM model across all products, with features and targets divided by each product's recent level (Day 7) | 100 separate models would each see a few hundred days. Scaled, a small and a big seller with the same weekly shape teach the model the same thing |
+| 27 | Training rows are past origins inside the history, with features from data before each one; it's retrained at every backtest origin (Day 7) | The same no-look-ahead rule as the backtest, applied inside the model's own training set. Tested by poisoning everything after a training origin |
+| 28 | Tweedie loss, not L1 or L2 on logs (Day 7) | It fits non-negative counts with a long tail and aims at the mean. L1 aims at the median and would repeat the -48% bias of ETS on logs |
 
 ## Limitations (known before starting)
 

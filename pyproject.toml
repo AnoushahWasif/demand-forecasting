@@ -12,6 +12,7 @@ dependencies = [
     "defusedxml>=0.7",
     "pyarrow>=17",
     "matplotlib>=3.9",
+    "statsmodels>=0.14",
 ]
 
 [dependency-groups]

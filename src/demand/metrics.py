@@ -13,7 +13,7 @@ def _errors(actual: pd.DataFrame, forecast: pd.DataFrame) -> pd.DataFrame:
 
 
 def scores(actual: pd.DataFrame, forecast: pd.DataFrame) -> dict:
-    """MAE, RMSE and wMAPE pooled over every date and series.
+    """MAE, RMSE, wMAPE and bias pooled over every date and series.
 
     wMAPE is None when nothing sold at all in the window: any error would be infinite.
     """
@@ -22,7 +22,11 @@ def scores(actual: pd.DataFrame, forecast: pd.DataFrame) -> dict:
 
 
 def from_arrays(actual: np.ndarray, forecast: np.ndarray) -> dict:
-    """The same three scores from flat arrays of matching shape."""
+    """MAE, RMSE, wMAPE and bias from flat arrays of matching shape.
+
+    Bias is units forecast / units sold - 1. MAE and wMAPE reward forecasting the typical day,
+    so a model can win them by ignoring large orders; bias shows when that happened.
+    """
     if actual.size == 0:
         raise ValueError("nothing to score")
     e = np.asarray(forecast, dtype=float) - np.asarray(actual, dtype=float)
@@ -31,6 +35,7 @@ def from_arrays(actual: np.ndarray, forecast: np.ndarray) -> dict:
         "mae": float(np.abs(e).mean()),
         "rmse": float(np.sqrt((e**2).mean())),
         "wmape": float(np.abs(e).sum() / sold) if sold > 0 else None,
+        "bias": float(np.sum(forecast) / sold - 1) if sold > 0 else None,
     }
 
 

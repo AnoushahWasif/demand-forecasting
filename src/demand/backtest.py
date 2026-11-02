@@ -136,7 +136,9 @@ def run_backtest(
     return pd.concat(rows, ignore_index=True)
 
 
-def summarise(results: pd.DataFrame) -> dict:
+def summarise(
+    results: pd.DataFrame, references: tuple[str, ...] = ("seasonal_naive", "weekday_mean_4")
+) -> dict:
     """Pooled, per horizon (with how many origins reach it), per origin, and per product."""
     from demand.metrics import from_arrays, skill
     from demand.series import TOTAL
@@ -144,54 +146,112 @@ def summarise(results: pd.DataFrame) -> dict:
     def pooled(d):
         return from_arrays(d["actual"].to_numpy(), d["forecast"].to_numpy())
 
+    def _wmape(d):
+        return pooled(d)["wmape"] if len(d) else None
+
     out = {}
     for model, m in results.groupby("model", sort=False):
         products, total = m[m["series"] != TOTAL], m[m["series"] == TOTAL]
-        per_product = products.groupby("series").apply(lambda d: pooled(d)["wmape"])
-        per_origin = products.groupby("origin").apply(lambda d: pooled(d)["wmape"])
-        out[model] = {
-            "products": {
+        level = products if len(products) else total
+        per_origin = level.groupby("origin").apply(lambda d: pooled(d)["wmape"])
+        out[model] = {"total": pooled(total)} if len(total) else {}
+        if len(products):
+            per_product = products.groupby("series").apply(lambda d: pooled(d)["wmape"])
+            out[model]["products"] = {
                 **pooled(products),
                 "median_product_wmape": float(per_product.median()),
-            },
-            "total": pooled(total),
+            }
+        out[model] |= {
             "by_horizon": [
                 {
                     "horizon": int(h),
                     "origins": int(d["origin"].nunique()),
-                    "products_wmape": pooled(d[d["series"] != TOTAL])["wmape"],
-                    "total_wmape": pooled(d[d["series"] == TOTAL])["wmape"],
+                    "products_wmape": _wmape(d[d["series"] != TOTAL]),
+                    "total_wmape": _wmape(d[d["series"] == TOTAL]),
                 }
                 for h, d in m.groupby("horizon")
             ],  # fmt: skip
             "by_origin": {str(o.date()): w for o, w in per_origin.items()},
         }
-    if "seasonal_naive" in out:
-        reference = out["seasonal_naive"]
+    for ref in references:
+        if ref not in out:
+            continue
         for result in out.values():
             for level in ("products", "total"):
-                result[level]["mae_skill_vs_seasonal_naive"] = skill(
-                    result[level]["mae"], reference[level]["mae"]
-                )
+                if level in result and level in out[ref]:
+                    result[level][f"mae_skill_vs_{ref}"] = skill(
+                        result[level]["mae"], out[ref][level]["mae"]
+                    )
     return out
 
 
+def counting(forecast: Forecaster, counts: dict, name: str) -> Forecaster:
+    """Wrap a forecaster to add up the fallbacks it reports in `attrs`."""
+
+    def wrapped(history, dates):
+        fc = forecast(history, dates)
+        counts[name] = counts.get(name, 0) + fc.attrs.get("fallbacks", 0)
+        return fc
+
+    return wrapped
+
+
 if __name__ == "__main__":
+    import argparse
     import json
     from pathlib import Path
 
     from demand import data
     from demand.models.baselines import BASELINES
+    from demand.series import TOTAL
 
-    wide = pd.read_parquet(data.data_dir() / "processed" / "daily_units.parquet")
-    results = run_backtest(wide, BASELINES, origins())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--statistical", action="store_true", help="add ETS and SARIMA (slow)")
+    parser.add_argument("--rescore", action="store_true", help="re-summarise the saved results")
+    args = parser.parse_args()
+
+    out = data.data_dir() / "processed"
+    saved = {"all": out / "backtest_results.parquet", "total": out / "backtest_total.parquet"}
+    counts_path = out / "backtest_fallbacks.json"
+    if not args.rescore:
+        wide = pd.read_parquet(out / "daily_units.parquet")
+        forecasters, counts = dict(BASELINES), {}
+        if args.statistical:
+            from demand.models.statistical import MODELS, sarima
+
+            forecasters |= {name: counting(f, counts, name) for name, f in MODELS.items()}
+        run_backtest(wide, forecasters, origins()).to_parquet(saved["all"])
+        if args.statistical:
+            # SARIMA takes seconds per fit, so it only runs on the shop total.
+            sarima_only = {"sarima": counting(sarima, counts, "sarima")}
+            run_backtest(wide[[TOTAL]], sarima_only, origins()).to_parquet(saved["total"])
+        counts_path.write_text(json.dumps(counts))
+
+    results = pd.read_parquet(saved["all"])
     summary = summarise(results)
+    counts = json.loads(counts_path.read_text()) if counts_path.is_file() else {}
+    n_series = results["series"].nunique()
+    for name, result in summary.items():
+        if name in counts:
+            result["fallbacks"] = {"forecasts": counts[name], "of": len(origins()) * n_series}
     Path("reports/backtest.json").write_text(json.dumps(summary, indent=2))
-    from demand.plots import plot_backtest
+    from demand.plots import LABELS, plot_backtest
 
-    plot_backtest(summary, origins()[0], Path("reports/figures/backtest_baselines.png"))
-    results.to_parquet(data.data_dir() / "processed" / "backtest_baselines.parquet")
+    best = min(summary, key=lambda m: summary[m]["products"]["wmape"])
+    wmape, bias = summary[best]["products"]["wmape"], summary[best]["products"]["bias"]
+    title = f"{LABELS.get(best, best)} has the lowest product error (wMAPE {wmape:.2f})"
+    if abs(bias) >= 0.1:
+        title += f", but forecasts {abs(bias):.0%} too {'few' if bias < 0 else 'many'} units"
+    plot_backtest(summary, origins()[0], title, Path("reports/figures/backtest.png"))
     for name, r in summary.items():
         p, t = r["products"], r["total"]
-        print(f"{name:16} products wMAPE {p['wmape']:.3f} median {p['median_product_wmape']:.3f}"
-              f" | total wMAPE {t['wmape']:.3f}")  # fmt: skip
+        print(f"{name:16} products wMAPE {p['wmape']:.3f} bias {p['bias']:+.2f}"
+              f" | total wMAPE {t['wmape']:.3f} bias {t['bias']:+.2f}")  # fmt: skip
+
+    if saved["total"].is_file() and "sarima" in counts:
+        total = pd.concat([results[results["series"] == TOTAL], pd.read_parquet(saved["total"])])
+        total_summary = summarise(total)
+        total_summary["sarima"]["fallbacks"] = {"forecasts": counts["sarima"], "of": len(origins())}
+        Path("reports/backtest_total.json").write_text(json.dumps(total_summary, indent=2))
+        t = total_summary["sarima"]["total"]
+        print(f"{'sarima':16} total wMAPE {t['wmape']:.3f} bias {t['bias']:+.2f}")

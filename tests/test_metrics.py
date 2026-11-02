@@ -59,3 +59,10 @@ def test_from_arrays_refuses_nothing():
 
     with pytest.raises(ValueError, match="nothing"):
         from_arrays(np.array([]), np.array([]))
+
+
+def test_bias_shows_under_and_over_forecasting():
+    actual = frame([10, 10, 0], [0, 0, 0])
+    assert scores(actual, frame([5, 5, 0], [0, 0, 0]))["bias"] == pytest.approx(-0.5)
+    assert scores(actual, frame([10, 10, 5], [0, 0, 0]))["bias"] == pytest.approx(0.25)
+    assert scores(frame([0, 0, 0], [0, 0, 0]), frame([1, 0, 0], [0, 0, 0]))["bias"] is None

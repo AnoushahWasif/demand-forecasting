@@ -100,3 +100,29 @@ def test_statistical_models_never_see_the_future(name):
     a = run_backtest(clean, {name: st.MODELS[name]}, [origin], stop=stop)
     b = run_backtest(poisoned, {name: st.MODELS[name]}, [origin], stop=stop)
     assert np.array_equal(a["forecast"], b["forecast"])
+
+
+@pytest.mark.parametrize("model", [st.ets, st.sarima])
+def test_a_closed_weekday_does_not_shift_the_weekly_pattern(model):
+    h = weekly(weeks=20, noise=0.5)
+    closed = h.index[(h.index.day_of_week == 0)][-1]  # a bank-holiday Monday last week
+    gappy = h.drop(closed)
+    fc = model(gappy, after(h, 6))
+    assert fc.attrs["fallbacks"] == 0
+    assert np.abs(fc["A"].to_numpy() - PATTERN).mean() < 2.5
+
+
+def test_forecast_dates_with_a_closure_in_between_are_read_off_the_grid():
+    h = weekly(weeks=20, noise=0.5)
+    dates = after(h, 8).delete(3)  # the shop will be shut on the 4th day
+    fc = st.ets(h, dates)
+    expected = np.tile(PATTERN, 2)[[0, 1, 2, 4, 5, 6, 7]]
+    assert fc.index.equals(dates)
+    assert np.abs(fc["A"].to_numpy() - expected).mean() < 2.5
+
+
+def test_a_saturday_forecast_is_refused():
+    h = weekly()
+    saturday = h.index.max() + pd.Timedelta(days=(5 - h.index.max().day_of_week) % 7 or 7)
+    with pytest.raises(ValueError, match="Sunday to Friday"):
+        st.ets(h, pd.DatetimeIndex([saturday]))

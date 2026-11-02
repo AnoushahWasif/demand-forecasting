@@ -208,12 +208,29 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--statistical", action="store_true", help="add ETS and SARIMA (slow)")
     parser.add_argument("--rescore", action="store_true", help="re-summarise the saved results")
+    parser.add_argument("--add", nargs="+", help="run only these models, merged into saved results")
     args = parser.parse_args()
 
     out = data.data_dir() / "processed"
     saved = {"all": out / "backtest_results.parquet", "total": out / "backtest_total.parquet"}
     counts_path = out / "backtest_fallbacks.json"
-    if not args.rescore:
+    if args.add:
+        from demand.models.gbm import lightgbm
+        from demand.models.statistical import MODELS
+
+        registry = dict(BASELINES) | MODELS | {"lightgbm": lightgbm}
+        unknown = set(args.add) - set(registry)
+        if unknown:
+            raise SystemExit(f"unknown models: {sorted(unknown)}")
+        wide = pd.read_parquet(out / "daily_units.parquet")
+        counts = json.loads(counts_path.read_text()) if counts_path.is_file() else {}
+        for name in args.add:
+            counts[name] = 0
+        new = run_backtest(wide, {n: counting(registry[n], counts, n) for n in args.add}, origins())
+        old = pd.read_parquet(saved["all"])
+        pd.concat([old[~old["model"].isin(args.add)], new]).to_parquet(saved["all"])
+        counts_path.write_text(json.dumps(counts))
+    elif not args.rescore:
         wide = pd.read_parquet(out / "daily_units.parquet")
         forecasters, counts = dict(BASELINES), {}
         if args.statistical:

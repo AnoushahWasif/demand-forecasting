@@ -13,6 +13,7 @@ COLORS = {
     "naive": "#a3a29e",
     "ets": "#1baf7a",
     "ets_log": "#8a5cd0",
+    "lightgbm": "#0b0b0b",
 }
 LABELS = {
     "weekday_mean_4": "mean of last 4 same weekdays",
@@ -20,6 +21,7 @@ LABELS = {
     "naive": "naive",
     "ets": "ETS",
     "ets_log": "ETS on log units",
+    "lightgbm": "LightGBM",
 }
 
 

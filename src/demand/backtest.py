@@ -254,11 +254,18 @@ if __name__ == "__main__":
     Path("reports/backtest.json").write_text(json.dumps(summary, indent=2))
     from demand.plots import LABELS, plot_backtest
 
-    best = min(summary, key=lambda m: summary[m]["products"]["wmape"])
-    wmape, bias = summary[best]["products"]["wmape"], summary[best]["products"]["bias"]
-    title = f"{LABELS.get(best, best)} has the lowest product error (wMAPE {wmape:.2f})"
-    if abs(bias) >= 0.1:
-        title += f", but forecasts {abs(bias):.0%} too {'few' if bias < 0 else 'many'} units"
+    def product(m, key):
+        return summary[m]["products"][key]
+
+    # Decision 23: a model more than 10% off on units can't win on error alone.
+    honest = [m for m in summary if abs(product(m, "bias")) < 0.1]
+    best = min(honest, key=lambda m: product(m, "wmape"))
+    title = f"{LABELS.get(best, best)}: lowest product error within 10% bias"
+    title += f" (wMAPE {product(best, 'wmape'):.2f})"
+    lower = [m for m in summary if product(m, "wmape") < product(best, "wmape")]
+    if lower:
+        trap = min(lower, key=lambda m: product(m, "wmape"))
+        title += f"; {LABELS.get(trap, trap)} is lower but {product(trap, 'bias'):+.0%} on units"
     plot_backtest(summary, origins()[0], title, Path("reports/figures/backtest.png"))
     for name, r in summary.items():
         p, t = r["products"], r["total"]

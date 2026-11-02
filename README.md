@@ -29,14 +29,14 @@ Large orders stay in but are flagged: 7,335 lines (0.7%) carry 2.4 million units
 
 ![Units per open day by month](reports/figures/eda_season.png)
 
-- **The peak is November, not December.** From September, sales per open day run 1.54 times the January to August level in 2010 and 1.55 times in 2011. The customers are mostly wholesalers stocking up for Christmas. December is 35% below November even per open day, so the drop isn't only the shop closing from 24 December.
+- **The peak is November, not December.** From 1 September to 14 October, sales per open day run 1.53 times the January to August level in 2010 and 1.55 times in 2011 (same dates both years, because 2011's November is in the holdout). In 2010 they keep rising into November. The customers are mostly wholesalers stocking up for Christmas. December is 35% below November even per open day, so the drop isn't only the shop closing from 24 December.
 - **No growth to model.** January to August 2011 is slightly below 2010.
 - **Thursday sells 1.23 times an average open day, Sunday 0.57.** Saturday is closed. The seasonal-naive baseline should copy the same weekday last week, not yesterday.
 - **Every product sells on most open days, but the amounts swing.** All 100 are "erratic" or "lumpy" by the usual cut-offs. Zeros aren't the problem, so Croston-style methods aren't needed. Without large orders, the median variation (CV²) halves from 2.2 to 1.1, but 99 of 100 are still erratic or lumpy.
 
 ![Demand classes with and without large orders](reports/figures/eda_demand_classes.png)
 
-What this changes for the next days: the backtest's 26 weekly origins run from April to October, and only the last 8 forecast into September. The holdout is all peak season. So backtest errors will look better than holdout errors, and a model that can't follow the season will look better than it is until the holdout. MAE and wMAPE are the main metrics, because RMSE gets pulled around by a few huge days. 11 tests.
+What this changes for the next days: the backtest's 26 weekly origins run from April to October, and only the last 8 forecast into September. The holdout is all peak season. So backtest errors will look better than holdout errors, and a model that can't follow the season will look better than it is until the holdout. MAE and wMAPE are the main metrics, because RMSE gets pulled around by a few huge days. 12 tests.
 
 ## Planned approach
 

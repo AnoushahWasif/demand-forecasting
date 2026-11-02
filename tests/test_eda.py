@@ -74,6 +74,14 @@ def test_seasonal_lift_compares_autumn_with_the_rest_of_the_year():
     assert seasonal_lift(s).to_dict() == {2010: 1.5}
 
 
+def test_seasonal_lift_compares_the_same_dates_each_year():
+    # November is the busiest month, but the second year stops in mid-October.
+    index = days("2010-01-01", 365).append(days("2011-01-01", 287))
+    s = pd.Series(np.where(index.month == 11, 30, np.where(index.month >= 9, 15, 10)), index=index)
+    assert seasonal_lift(s).to_dict()[2010] > 1.5
+    assert seasonal_lift(s, until=(10, 14)).to_dict() == {2010: 1.5, 2011: 1.5}
+
+
 def test_a_year_without_autumn_is_left_out():
     s = pd.Series(10, index=days("2011-01-01", 200))  # ends in July
     assert seasonal_lift(s).empty

@@ -37,12 +37,16 @@ def weekday_profile(series: pd.Series) -> pd.DataFrame:
     return out.reindex(range(7)).assign(open_days=lambda d: d["open_days"].fillna(0).astype(int))
 
 
-def seasonal_lift(series: pd.Series) -> pd.Series:
-    """Per year: units per open day in Sep-Nov over units per open day in Jan-Aug."""
+def seasonal_lift(series: pd.Series, until: tuple[int, int] = (11, 30)) -> pd.Series:
+    """Per year: units per open day from 1 Sep to `until` (month, day) over Jan-Aug.
+
+    Set `until` to the last date the latest year has, or the years aren't compared like for like.
+    """
     lift = {}
     for year, part in series.groupby(series.index.year):
         base = part[part.index.month <= 8]
-        peak = part[part.index.month.isin([9, 10, 11])]
+        end = pd.Timestamp(year=int(year), month=until[0], day=until[1])
+        peak = part[(part.index.month >= 9) & (part.index <= end)]
         if len(base) and len(peak):
             lift[int(year)] = float(peak.mean() / base.mean())
     return pd.Series(lift, name="lift", dtype=float)

@@ -215,10 +215,10 @@ if __name__ == "__main__":
     saved = {"all": out / "backtest_results.parquet", "total": out / "backtest_total.parquet"}
     counts_path = out / "backtest_fallbacks.json"
     if args.add:
-        from demand.models.gbm import lightgbm
+        from demand.models.gbm import VARIANTS
         from demand.models.statistical import MODELS
 
-        registry = dict(BASELINES) | MODELS | {"lightgbm": lightgbm}
+        registry = dict(BASELINES) | MODELS | VARIANTS
         unknown = set(args.add) - set(registry)
         if unknown:
             raise SystemExit(f"unknown models: {sorted(unknown)}")

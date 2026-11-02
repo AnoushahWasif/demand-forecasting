@@ -208,12 +208,29 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--statistical", action="store_true", help="add ETS and SARIMA (slow)")
     parser.add_argument("--rescore", action="store_true", help="re-summarise the saved results")
+    parser.add_argument("--add", nargs="+", help="run only these models, merged into saved results")
     args = parser.parse_args()
 
     out = data.data_dir() / "processed"
     saved = {"all": out / "backtest_results.parquet", "total": out / "backtest_total.parquet"}
     counts_path = out / "backtest_fallbacks.json"
-    if not args.rescore:
+    if args.add:
+        from demand.models.gbm import lightgbm
+        from demand.models.statistical import MODELS
+
+        registry = dict(BASELINES) | MODELS | {"lightgbm": lightgbm}
+        unknown = set(args.add) - set(registry)
+        if unknown:
+            raise SystemExit(f"unknown models: {sorted(unknown)}")
+        wide = pd.read_parquet(out / "daily_units.parquet")
+        counts = json.loads(counts_path.read_text()) if counts_path.is_file() else {}
+        for name in args.add:
+            counts[name] = 0
+        new = run_backtest(wide, {n: counting(registry[n], counts, n) for n in args.add}, origins())
+        old = pd.read_parquet(saved["all"])
+        pd.concat([old[~old["model"].isin(args.add)], new]).to_parquet(saved["all"])
+        counts_path.write_text(json.dumps(counts))
+    elif not args.rescore:
         wide = pd.read_parquet(out / "daily_units.parquet")
         forecasters, counts = dict(BASELINES), {}
         if args.statistical:
@@ -237,11 +254,18 @@ if __name__ == "__main__":
     Path("reports/backtest.json").write_text(json.dumps(summary, indent=2))
     from demand.plots import LABELS, plot_backtest
 
-    best = min(summary, key=lambda m: summary[m]["products"]["wmape"])
-    wmape, bias = summary[best]["products"]["wmape"], summary[best]["products"]["bias"]
-    title = f"{LABELS.get(best, best)} has the lowest product error (wMAPE {wmape:.2f})"
-    if abs(bias) >= 0.1:
-        title += f", but forecasts {abs(bias):.0%} too {'few' if bias < 0 else 'many'} units"
+    def product(m, key):
+        return summary[m]["products"][key]
+
+    # Decision 23: a model more than 10% off on units can't win on error alone.
+    honest = [m for m in summary if abs(product(m, "bias")) < 0.1]
+    best = min(honest, key=lambda m: product(m, "wmape"))
+    title = f"{LABELS.get(best, best)}: lowest product error within 10% bias"
+    title += f" (wMAPE {product(best, 'wmape'):.2f})"
+    lower = [m for m in summary if product(m, "wmape") < product(best, "wmape")]
+    if lower:
+        trap = min(lower, key=lambda m: product(m, "wmape"))
+        title += f"; {LABELS.get(trap, trap)} is lower but {product(trap, 'bias'):+.0%} on units"
     plot_backtest(summary, origins()[0], title, Path("reports/figures/backtest.png"))
     for name, r in summary.items():
         p, t = r["products"], r["total"]

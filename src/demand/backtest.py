@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 
+import numpy as np
 import pandas as pd
 
 from demand.series import HOLDOUT_START
@@ -85,7 +86,10 @@ def forecast_dates(
     """The next `horizon` planned open days, from the calendar, not from the data."""
     from demand.calendar import planned_open_days
 
-    dates = planned_open_days(origin, origin + pd.Timedelta(days=3 * horizon + 14))
+    end = origin + pd.Timedelta(days=3 * horizon + 14)
+    if stop is not None:
+        end = min(end, stop)
+    dates = planned_open_days(origin, end)
     if stop is not None:
         dates = dates[dates < stop]
     return dates[:horizon]
@@ -114,6 +118,8 @@ def run_backtest(
             fc = forecast(history.copy(), dates)
             if not fc.index.equals(dates) or not fc.columns.equals(history.columns):
                 raise ValueError(f"{name} returned the wrong dates or series at {origin.date()}")
+            if not np.isfinite(fc.to_numpy(dtype=float)).all():
+                raise ValueError(f"{name} returned missing or infinite values at {origin.date()}")
             long = (
                 fc.rename_axis(index="date", columns="series")
                 .stack()

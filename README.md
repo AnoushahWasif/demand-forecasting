@@ -68,7 +68,7 @@ What this changes for the next days: the backtest's 26 weekly origins run from A
 - **Horizon here mostly means weekday.** Every origin is a Saturday, so 1 day ahead is always a Sunday, the smallest day with the largest relative error. From 2 to 14 days ahead the error barely grows. Day 9 staggers the origins so error by horizon can be separated from error by weekday.
 - The last origin only reaches 6 open days before the holdout, so horizons 7 to 14 rest on 24 or 25 origins, not 26. The report lists the count for each horizon.
 
-15 tests on top: a spy forecaster checks that no forecaster ever sees a day at or after its origin; multiplying every future value by 1,000 leaves every baseline's forecasts unchanged (this test runs for every model added to the registry); a forecaster that edits its input can't affect the next; forecasts for the wrong dates and a closure the calendar didn't plan are refused; pooled wMAPE must lie between the per-horizon values. That last test was added after the first chart showed it didn't: the per-horizon product numbers had the shop total mixed in.
+18 tests on top: a spy forecaster checks that no forecaster ever sees a day at or after its origin; multiplying every future value by 1,000 leaves every baseline's forecasts unchanged (this test runs for every model added to the registry); a forecaster that edits its input can't affect the next; forecasts for the wrong dates or with missing values, a closure the calendar didn't plan, and dates outside the calendar's years are refused; pooled wMAPE must lie between the per-horizon values. That last test was added after the first chart showed it didn't: the per-horizon product numbers had the shop total mixed in.
 
 ## Planned approach
 

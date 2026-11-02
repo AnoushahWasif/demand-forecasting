@@ -141,3 +141,19 @@ def test_horizon_scores_leave_the_total_out_of_the_product_numbers():
     h1 = results[(results["horizon"] == 1) & (results["series"] != TOTAL)]
     expected = (h1["forecast"] - h1["actual"]).abs().sum() / h1["actual"].sum()
     assert summary["by_horizon"][0]["products_wmape"] == pytest.approx(expected)
+
+
+def test_the_calendar_refuses_years_it_does_not_cover():
+    with pytest.raises(ValueError, match="only covers"):
+        planned_closed(pd.DatetimeIndex(["2012-04-06"]))  # Good Friday 2012
+
+
+@pytest.mark.parametrize("bad", [np.nan, np.inf])
+def test_a_forecast_with_missing_values_is_refused(bad):
+    def broken(history, dates):
+        fc = BASELINES["naive"](history, dates)
+        fc.iloc[0, 0] = bad
+        return fc
+
+    with pytest.raises(ValueError, match="missing or infinite"):
+        run_backtest(panel(), {"broken": broken}, AT[:1], stop=STOP)

@@ -14,11 +14,17 @@ BANK_HOLIDAYS = pd.DatetimeIndex(
     ]
 )  # fmt: skip
 EASTER_SUNDAYS = pd.DatetimeIndex(["2010-04-04", "2011-04-24"])
+# The holiday lists above only cover these years. Past them, Easter would quietly count as open.
+COVERS = (pd.Timestamp("2009-12-01"), pd.Timestamp("2011-12-31"))
 
 
 def planned_closed(dates: pd.DatetimeIndex) -> pd.Series:
     """True where the shop is planned to be shut."""
     dates = pd.DatetimeIndex(dates).normalize()
+    if len(dates) and (dates.min() < COVERS[0] or dates.max() > COVERS[1]):
+        raise ValueError(
+            f"the closure calendar only covers {COVERS[0].date()} to {COVERS[1].date()}"
+        )
     christmas = ((dates.month == 12) & (dates.day >= 24)) | ((dates.month == 1) & (dates.day <= 3))
     closed = (
         (dates.day_of_week == 5)

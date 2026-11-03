@@ -1,0 +1,360 @@
+{
+  "origins": [
+    "2011-10-15",
+    "2011-10-22",
+    "2011-10-29",
+    "2011-11-05",
+    "2011-11-12",
+    "2011-11-19",
+    "2011-11-26",
+    "2011-12-03"
+  ],
+  "last_day": "2011-12-09",
+  "models": {
+    "lightgbm_no_christmas": {
+      "total": {
+        "mae": 6333.854222559833,
+        "rmse": 7701.441292339164,
+        "wmape": 0.2359365034971617,
+        "bias": -0.01538396172225276,
+        "mae_skill_vs_weekday_mean_4": 0.034950471410924555,
+        "mae_skill_vs_ets": -0.06023666151862783
+      },
+      "products": {
+        "mae": 30.325274413407964,
+        "rmse": 88.3592617966206,
+        "wmape": 0.7939551966466403,
+        "bias": -0.10928130214585952,
+        "median_product_wmape": 0.8571290395440336,
+        "mae_skill_vs_weekday_mean_4": 0.11864159793147355,
+        "mae_skill_vs_ets": 0.04356093728588817
+      },
+      "by_horizon": [
+        {
+          "horizon": 1,
+          "origins": 8,
+          "products_wmape": 0.8213318779083597,
+          "total_wmape": 0.38094298187002873
+        },
+        {
+          "horizon": 2,
+          "origins": 8,
+          "products_wmape": 0.7809868620177535,
+          "total_wmape": 0.20077830429471608
+        },
+        {
+          "horizon": 3,
+          "origins": 8,
+          "products_wmape": 0.7831038309325927,
+          "total_wmape": 0.28877642758737365
+        },
+        {
+          "horizon": 4,
+          "origins": 8,
+          "products_wmape": 0.761680015295012,
+          "total_wmape": 0.14505845908515602
+        },
+        {
+          "horizon": 5,
+          "origins": 8,
+          "products_wmape": 0.8525412333113981,
+          "total_wmape": 0.23580627285990763
+        },
+        {
+          "horizon": 6,
+          "origins": 8,
+          "products_wmape": 0.8368718411140437,
+          "total_wmape": 0.31925608490823215
+        },
+        {
+          "horizon": 7,
+          "origins": 7,
+          "products_wmape": 0.7974613949601832,
+          "total_wmape": 0.3606568682391131
+        },
+        {
+          "horizon": 8,
+          "origins": 7,
+          "products_wmape": 0.7841958291892464,
+          "total_wmape": 0.2403195730907525
+        },
+        {
+          "horizon": 9,
+          "origins": 7,
+          "products_wmape": 0.7746286673483465,
+          "total_wmape": 0.12109585048745902
+        },
+        {
+          "horizon": 10,
+          "origins": 7,
+          "products_wmape": 0.7619022350486765,
+          "total_wmape": 0.19010088927571667
+        },
+        {
+          "horizon": 11,
+          "origins": 7,
+          "products_wmape": 0.8388113706717365,
+          "total_wmape": 0.1900337418197541
+        },
+        {
+          "horizon": 12,
+          "origins": 7,
+          "products_wmape": 0.8173953107635967,
+          "total_wmape": 0.2622476676291434
+        },
+        {
+          "horizon": 13,
+          "origins": 6,
+          "products_wmape": 0.7145153238052694,
+          "total_wmape": 0.34104998237016404
+        },
+        {
+          "horizon": 14,
+          "origins": 6,
+          "products_wmape": 0.764211443286351,
+          "total_wmape": 0.22569928188836502
+        }
+      ],
+      "by_origin": {
+        "2011-10-15": 0.9660190874383152,
+        "2011-10-22": 0.903315088756496,
+        "2011-10-29": 0.7689711337127161,
+        "2011-11-05": 0.7278630911881323,
+        "2011-11-12": 0.7206924521214869,
+        "2011-11-19": 0.7136318769259816,
+        "2011-11-26": 0.8110158204855873,
+        "2011-12-03": 0.8606061141306444
+      }
+    },
+    "ets": {
+      "total": {
+        "mae": 5974.000383544132,
+        "rmse": 7422.605728684391,
+        "wmape": 0.2225319233530545,
+        "bias": -0.06334127074543483,
+        "mae_skill_vs_weekday_mean_4": 0.0897791374175001,
+        "mae_skill_vs_ets": 0.0
+      },
+      "products": {
+        "mae": 31.706436505586826,
+        "rmse": 89.75649231768331,
+        "wmape": 0.8301158198135624,
+        "bias": -0.07485637449635063,
+        "median_product_wmape": 0.8665540839305513,
+        "mae_skill_vs_weekday_mean_4": 0.07850020306837646,
+        "mae_skill_vs_ets": 0.0
+      },
+      "by_horizon": [
+        {
+          "horizon": 1,
+          "origins": 8,
+          "products_wmape": 0.9034113927114663,
+          "total_wmape": 0.37638657308296064
+        },
+        {
+          "horizon": 2,
+          "origins": 8,
+          "products_wmape": 0.8048614249415484,
+          "total_wmape": 0.23272719969480488
+        },
+        {
+          "horizon": 3,
+          "origins": 8,
+          "products_wmape": 0.8040119086060388,
+          "total_wmape": 0.09658547567066562
+        },
+        {
+          "horizon": 4,
+          "origins": 8,
+          "products_wmape": 0.7854131507811839,
+          "total_wmape": 0.2081299316593337
+        },
+        {
+          "horizon": 5,
+          "origins": 8,
+          "products_wmape": 0.9214025179600406,
+          "total_wmape": 0.19264202727030533
+        },
+        {
+          "horizon": 6,
+          "origins": 8,
+          "products_wmape": 0.8465906211093693,
+          "total_wmape": 0.25973170002555934
+        },
+        {
+          "horizon": 7,
+          "origins": 7,
+          "products_wmape": 0.8552047241126153,
+          "total_wmape": 0.3624234509845253
+        },
+        {
+          "horizon": 8,
+          "origins": 7,
+          "products_wmape": 0.8163751434876495,
+          "total_wmape": 0.24559664296956715
+        },
+        {
+          "horizon": 9,
+          "origins": 7,
+          "products_wmape": 0.8064022202527122,
+          "total_wmape": 0.11631074608437335
+        },
+        {
+          "horizon": 10,
+          "origins": 7,
+          "products_wmape": 0.7867802158423752,
+          "total_wmape": 0.22496726288001193
+        },
+        {
+          "horizon": 11,
+          "origins": 7,
+          "products_wmape": 0.9177012438522845,
+          "total_wmape": 0.18059378519248195
+        },
+        {
+          "horizon": 12,
+          "origins": 7,
+          "products_wmape": 0.8093137481321364,
+          "total_wmape": 0.2658869117947122
+        },
+        {
+          "horizon": 13,
+          "origins": 6,
+          "products_wmape": 0.7957911568804538,
+          "total_wmape": 0.33631357218796704
+        },
+        {
+          "horizon": 14,
+          "origins": 6,
+          "products_wmape": 0.8010584890616386,
+          "total_wmape": 0.22338725407544593
+        }
+      ],
+      "by_origin": {
+        "2011-10-15": 0.9931749573496246,
+        "2011-10-22": 0.9589187719566481,
+        "2011-10-29": 0.8166488747981193,
+        "2011-11-05": 0.7788408468318065,
+        "2011-11-12": 0.7577411200478468,
+        "2011-11-19": 0.7541473349927733,
+        "2011-11-26": 0.8168342071289948,
+        "2011-12-03": 0.8559818566890877
+      }
+    },
+    "weekday_mean_4": {
+      "total": {
+        "mae": 6563.242647058823,
+        "rmse": 8075.419226012842,
+        "wmape": 0.24448123801698166,
+        "bias": -0.09314699169177398,
+        "mae_skill_vs_weekday_mean_4": 0.0,
+        "mae_skill_vs_ets": -0.09863445357951539
+      },
+      "products": {
+        "mae": 34.407426470588234,
+        "rmse": 95.27189982273542,
+        "wmape": 0.9008312563688586,
+        "bias": -0.10524434599361898,
+        "median_product_wmape": 0.9292747016876258,
+        "mae_skill_vs_weekday_mean_4": 0.0,
+        "mae_skill_vs_ets": -0.08518743393081962
+      },
+      "by_horizon": [
+        {
+          "horizon": 1,
+          "origins": 8,
+          "products_wmape": 0.8523679727427598,
+          "total_wmape": 0.44424951185727873
+        },
+        {
+          "horizon": 2,
+          "origins": 8,
+          "products_wmape": 0.8929638904596494,
+          "total_wmape": 0.23715434771310812
+        },
+        {
+          "horizon": 3,
+          "origins": 8,
+          "products_wmape": 0.787062738278376,
+          "total_wmape": 0.14413547188741407
+        },
+        {
+          "horizon": 4,
+          "origins": 8,
+          "products_wmape": 0.8975337762393926,
+          "total_wmape": 0.2528672042461978
+        },
+        {
+          "horizon": 5,
+          "origins": 8,
+          "products_wmape": 1.0248097676706305,
+          "total_wmape": 0.1731668969096557
+        },
+        {
+          "horizon": 6,
+          "origins": 8,
+          "products_wmape": 0.9537269818466763,
+          "total_wmape": 0.24204179653569055
+        },
+        {
+          "horizon": 7,
+          "origins": 7,
+          "products_wmape": 0.8516513167362211,
+          "total_wmape": 0.510617293899589
+        },
+        {
+          "horizon": 8,
+          "origins": 7,
+          "products_wmape": 0.9067933683784877,
+          "total_wmape": 0.21497525543512996
+        },
+        {
+          "horizon": 9,
+          "origins": 7,
+          "products_wmape": 0.7929502259064262,
+          "total_wmape": 0.18632964628157458
+        },
+        {
+          "horizon": 10,
+          "origins": 7,
+          "products_wmape": 0.9037832402905337,
+          "total_wmape": 0.22869809784292378
+        },
+        {
+          "horizon": 11,
+          "origins": 7,
+          "products_wmape": 1.0496210366055472,
+          "total_wmape": 0.1544336221617861
+        },
+        {
+          "horizon": 12,
+          "origins": 7,
+          "products_wmape": 0.8879500036072433,
+          "total_wmape": 0.26736878735773356
+        },
+        {
+          "horizon": 13,
+          "origins": 6,
+          "products_wmape": 0.7951161741484322,
+          "total_wmape": 0.4885055276573807
+        },
+        {
+          "horizon": 14,
+          "origins": 6,
+          "products_wmape": 0.8726213493436451,
+          "total_wmape": 0.24036287773422682
+        }
+      ],
+      "by_origin": {
+        "2011-10-15": 1.0954619937389942,
+        "2011-10-22": 0.9899942027692925,
+        "2011-10-29": 0.8937884761707131,
+        "2011-11-05": 0.8218706231067392,
+        "2011-11-12": 0.8094044270514859,
+        "2011-11-19": 0.8422161866633745,
+        "2011-11-26": 0.9128256513026052,
+        "2011-12-03": 0.9580472151160181
+      }
+    }
+  }
+}

@@ -29,8 +29,8 @@ The question it answers: **how many units of each of the retailer's main product
 | Backtest | `src/demand/backtest.py` | Generates forecast origins, gives each model only the data before its origin, collects forecasts by horizon |
 | Metrics | `src/demand/metrics.py` | MAE, RMSE, wMAPE and skill vs seasonal-naive. Handles all-zero windows explicitly |
 | Models | `src/demand/models/` | Baselines, exponential smoothing / SARIMA (statsmodels), LightGBM on lag, rolling and calendar features |
-| Model store | `src/demand/model_store.py` | Saves models with a manifest (SHA-256, data hash, training window, git commit) and refuses to load a file whose hash doesn't match |
-| CLI | `src/demand/cli.py` | `demand backtest`, `demand train`, `demand forecast --days 14 --out forecast.csv` |
+| Model store | (not needed) | Every model is refitted from the data in seconds to minutes, so nothing trained is saved or loaded, and there's no pickle to check |
+| CLI | `src/demand/cli.py` | `demand data`, `demand backtest`, `demand forecast --days 14 --out forecast.csv`, `demand holdout` |
 | Notebooks | `notebooks/` | EDA and model comparison. They import from `src/demand` instead of copying code |
 
 ## Data flow
@@ -88,6 +88,10 @@ flowchart LR
 | 32 | Error by horizon is measured on origins staggered across the six trading weekdays (Day 9) | With every origin on a Saturday, each horizon always fell on the same weekday, and "error by horizon" was really error by weekday |
 | 33 | 80% intervals from level-scaled backtest errors per horizon, set on the first half of the origins and checked on the second (Day 9) | One method for every product, no distribution assumed, and the coverage figure comes from origins the intervals never saw |
 | 34 | Interval coverage is reported per product too, not only pooled (Day 9) | Pooled it's 78%; per product it's 29% to 98%. The pooled number alone would hide that the erratic products get intervals that are too narrow |
+| 35 | `demand holdout` refuses to run if `reports/holdout.json` exists (Day 10) | "Scored once" becomes a rule the tool enforces, not a promise. Scoring again needs a commit that deletes the file, which leaves a trace |
+| 36 | Forecast CSVs neutralise cells a spreadsheet would read as formulas (Day 10) | Product descriptions come from the raw data. A description starting with `=` would run as a formula when a buyer opens the CSV (CSV injection) |
+| 37 | Products and the shop total get separate interval quantiles (Day 10) | Product-sized quantiles gave the total an interval from 0 to almost three times the forecast |
+| 38 | A backtest window ends where the data ends, as well as at the holdout (Day 10) | The last holdout origin has only 6 days of data; without this the calendar asked for 14 and the run stopped |
 
 ## Limitations (known before starting)
 

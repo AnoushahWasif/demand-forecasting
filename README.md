@@ -4,7 +4,7 @@ Forecasting how many units of each product a UK online gift retailer will sell p
 
 The point is to forecast honestly rather than chase a low error on one lucky split. Every model is compared against naive baselines, scored with rolling-origin backtests over many cut-off dates, and checked by tests that make sure no feature can see the future.
 
-**Status:** in progress (day 9 of 11).
+**Status:** in progress (day 10 of 11).
 
 ## So far
 
@@ -160,8 +160,16 @@ Python 3.12, uv, pandas, statsmodels, LightGBM, matplotlib, pytest, ruff. CI: Gi
 ```bash
 uv sync
 make lint test
-make data   # downloads 46 MB, checks its SHA-256, builds the daily series
+uv run demand data                          # downloads 46 MB, checks its SHA-256, builds the daily series
+uv run demand backtest --statistical        # 26 origins, every model (about 45 minutes on a laptop)
+uv run python -m demand.intervals           # staggered origins and 80% intervals
+uv run demand forecast --days 14 --out forecast.csv
+uv run demand holdout                       # scores the chosen model on the holdout, once
 ```
+
+`forecast` trains on everything up to the last day and writes one row per day and product, plus the shop total, with an 80% interval. Products and the total get separate interval widths, because relative to its level the total swings far less. Text that a spreadsheet would run as a formula (a cell starting with `=`, `+`, `-`, `@`) gets a leading `'`. If the shop shuts sooner than the requested days (it closes from 24 December), it says so and forecasts the open days that are left.
+
+`holdout` refits the chosen model and its two references at each weekly origin in the holdout and writes `reports/holdout.json`. If that file exists, it refuses to run, so the holdout can't be scored, tuned against, and scored again without a commit that deletes it and says why.
 
 ## Architecture
 

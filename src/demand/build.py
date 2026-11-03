@@ -46,7 +46,7 @@ def build(raw: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     return wide[[*products, TOTAL]], report
 
 
-if __name__ == "__main__":
+def main() -> None:
     series, report = build(data.load())
     out = data.data_dir() / "processed"
     out.mkdir(parents=True, exist_ok=True)
@@ -55,3 +55,7 @@ if __name__ == "__main__":
     Path("reports/cleaning.json").write_text(json.dumps(report, indent=2))
     print(json.dumps({k: v for k, v in report.items() if k != "products"}, indent=2))
     print({k: v for k, v in report["products"].items() if k != "descriptions"})
+
+
+if __name__ == "__main__":
+    main()

@@ -19,6 +19,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
+      - run: uv run demand --help
 
   audit:
     runs-on: ubuntu-latest

@@ -157,3 +157,12 @@ def test_a_forecast_with_missing_values_is_refused(bad):
 
     with pytest.raises(ValueError, match="missing or infinite"):
         run_backtest(panel(), {"broken": broken}, AT[:1], stop=STOP)
+
+
+def test_windows_end_where_the_data_ends():
+    wide = panel()
+    last = wide.index.max()
+    origin = last - pd.Timedelta(days=4)
+    results = run_backtest(wide, {"naive": BASELINES["naive"]}, [origin], stop=None)
+    assert results["date"].max() == last
+    assert results["horizon"].max() < 14

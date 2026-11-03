@@ -16,6 +16,9 @@ dependencies = [
     "lightgbm>=4.5",
 ]
 
+[project.scripts]
+demand = "demand.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",

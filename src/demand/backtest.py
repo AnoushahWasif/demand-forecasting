@@ -111,6 +111,9 @@ def run_backtest(
 ) -> pd.DataFrame:
     """Every forecaster at every origin. One row per origin, model, date and series."""
     rows = []
+    # Windows also end where the data ends: the last origins get fewer days to score.
+    end = wide.index.max() + pd.Timedelta(days=1)
+    stop = end if stop is None else min(stop, end)
     for origin in at:
         history, future = split_at(wide, origin, horizon, stop)
         dates = forecast_dates(origin, horizon, stop)
@@ -200,7 +203,7 @@ def counting(forecast: Forecaster, counts: dict, name: str) -> Forecaster:
     return wrapped
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> None:
     import argparse
     import json
     from pathlib import Path
@@ -213,7 +216,7 @@ if __name__ == "__main__":
     parser.add_argument("--statistical", action="store_true", help="add ETS and SARIMA (slow)")
     parser.add_argument("--rescore", action="store_true", help="re-summarise the saved results")
     parser.add_argument("--add", nargs="+", help="run only these models, merged into saved results")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     out = data.data_dir() / "processed"
     saved = {"all": out / "backtest_results.parquet", "total": out / "backtest_total.parquet"}
@@ -283,3 +286,7 @@ if __name__ == "__main__":
         Path("reports/backtest_total.json").write_text(json.dumps(total_summary, indent=2))
         t = total_summary["sarima"]["total"]
         print(f"{'sarima':16} total wMAPE {t['wmape']:.3f} bias {t['bias']:+.2f}")
+
+
+if __name__ == "__main__":
+    main()

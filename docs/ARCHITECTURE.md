@@ -46,8 +46,7 @@ flowchart LR
     F -->|last 8 weeks| H[final holdout, scored once]
     G --> I[baselines / ETS-SARIMA / LightGBM]
     I --> J[metrics by horizon + figures]
-    I --> K[model store with hash manifest]
-    K --> L[demand forecast -> CSV]
+    I -->|refit on all data| L[demand forecast -> CSV]
 ```
 
 ## Decisions
